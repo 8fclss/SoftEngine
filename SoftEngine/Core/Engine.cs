@@ -46,12 +46,14 @@ public class Engine
 
         Matrix4 world = translation * rotX * rotY * rotZ;
 
+        var worldPoints = new Vector3[_mesh.Vertices.Length];
         var projectedPoints = new (int x, int y)[_mesh.Vertices.Length];
         float fov = _screen.Height;
 
         for (int i = 0; i < _mesh.Vertices.Length; i++)
         {
             Vector3 v = world.Transform(_mesh.Vertices[i]);
+            worldPoints[i] = v;
             
             float pZ = v.Z;
             if (pZ < 0.1f) pZ = 0.1f;
@@ -65,11 +67,28 @@ public class Engine
             );
         }
 
-        foreach (var edge in _mesh.Edges)
+        foreach (var face in _mesh.Faces)
         {
-            var p1 = projectedPoints[edge.a];
-            var p2 = projectedPoints[edge.b];
-            _screen.DrawLine(p1.x, p1.y, p2.x, p2.y);
+            Vector3 v0 = worldPoints[face.a];
+            Vector3 v1 = worldPoints[face.b];
+            Vector3 v2 = worldPoints[face.c];
+
+            Vector3 side1 = v1 - v0;
+            Vector3 side2 = v2 - v0;
+            Vector3 normal = Vector3.Cross(side1, side2);
+            
+            Vector3 viewDir = v0;
+
+            if (Vector3.Dot(normal, viewDir) < 0)
+            {
+                var p0 = projectedPoints[face.a];
+                var p1 = projectedPoints[face.b];
+                var p2 = projectedPoints[face.c];
+
+                _screen.DrawLine(p0.x, p0.y, p1.x, p1.y);
+                _screen.DrawLine(p1.x, p1.y, p2.x, p2.y);
+                _screen.DrawLine(p2.x, p2.y, p0.x, p0.y);
+            }
         }
 
         _screen.Present();
