@@ -85,12 +85,28 @@ public class Engine
                 var p1 = projectedPoints[face.b];
                 var p2 = projectedPoints[face.c];
 
-                _screen.DrawLine(p0.x, p0.y, p1.x, p1.y);
-                _screen.DrawLine(p1.x, p1.y, p2.x, p2.y);
-                _screen.DrawLine(p2.x, p2.y, p0.x, p0.y);
+                Vector3 lightDir = new Vector3(1, -1, -1);
+                float normalLen = (float)Math.Sqrt(normal.X * normal.X + normal.Y * normal.Y + normal.Z * normal.Z);
+                float lightLen = (float)Math.Sqrt(lightDir.X * lightDir.X + lightDir.Y * lightDir.Y + lightDir.Z * lightDir.Z);
+                
+                float dot = -Vector3.Dot(normal, lightDir) / (normalLen * lightLen);
+                
+                char shade = GetShade(dot);
+
+                _screen.DrawTriangle(p0.x, p0.y, p1.x, p1.y, p2.x, p2.y, shade);
             }
         }
 
         _screen.Present();
+    }
+
+    private char GetShade(float intensity)
+    {
+        intensity += + 1.2f;
+        string shades = " .:-=+*#%@";
+        int index = (int)(intensity * (shades.Length - 1));
+        if (index < 0) index = 0;
+        if (index >= shades.Length) index = shades.Length - 1;
+        return shades[index];
     }
 }
