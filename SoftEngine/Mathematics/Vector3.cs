@@ -24,4 +24,13 @@ public struct Vector3
         a.Z * b.X - a.X * b.Z,
         a.X * b.Y - a.Y * b.X
     );
+
+    public float Length() => (float)Math.Sqrt(X * X + Y * Y + Z * Z);
+
+    public Vector3 Normalize()
+    {
+        float len = Length();
+        if (len < 0.0001f) return new Vector3(0, 0, 0);
+        return new Vector3(X / len, Y / len, Z / len);
+    }
 }

@@ -85,15 +85,19 @@ public class Engine
                 var p1 = projectedPoints[face.b];
                 var p2 = projectedPoints[face.c];
 
-                Vector3 lightDir = new Vector3(1, -1, -1);
-                float normalLen = (float)Math.Sqrt(normal.X * normal.X + normal.Y * normal.Y + normal.Z * normal.Z);
-                float lightLen = (float)Math.Sqrt(lightDir.X * lightDir.X + lightDir.Y * lightDir.Y + lightDir.Z * lightDir.Z);
+                float z0 = worldPoints[face.a].Z;
+                float z1 = worldPoints[face.b].Z;
+                float z2 = worldPoints[face.c].Z;
                 
-                float dot = -Vector3.Dot(normal, lightDir) / (normalLen * lightLen);
+                Vector3 n = normal.Normalize();
+                Vector3 lightDir = new Vector3(-0.5f, -0.5f, -1.0f).Normalize();
                 
-                char shade = GetShade(dot);
+                float dot = Vector3.Dot(n, lightDir);
+                
+                float intensity = Math.Clamp(dot, 0, 1) + 0.2f;
+                char shade = GetShade(intensity);
 
-                _screen.DrawTriangle(p0.x, p0.y, p1.x, p1.y, p2.x, p2.y, shade);
+                _screen.DrawTriangle(p0.x, p0.y, z0, p1.x, p1.y, z1, p2.x, p2.y, z2, shade);
             }
         }
 
@@ -102,7 +106,6 @@ public class Engine
 
     private char GetShade(float intensity)
     {
-        intensity += + 1.2f;
         string shades = " .:-=+*#%@";
         int index = (int)(intensity * (shades.Length - 1));
         if (index < 0) index = 0;

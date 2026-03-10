@@ -5,12 +5,14 @@ public class Screen
     public int Width { get; private set; }
     public int Height { get; private set; }
     private char[] _buffer;
+    private float[] _zBuffer;
 
     public Screen(int width, int height)
     {
         Width = width;
         Height = height;
         _buffer = new char[width * (height - 1)];
+        _zBuffer = new float[width * (height - 1)];
     }
 
     public void Resize(int width, int height)
@@ -18,44 +20,46 @@ public class Screen
         Width = width;
         Height = height;
         _buffer = new char[width * (height - 1)];
+        _zBuffer = new float[width * (height - 1)];
     }
 
     public void Clear()
     {
         Array.Fill(_buffer, ' ');
+        Array.Fill(_zBuffer, float.MaxValue);
     }
 
-    public void DrawLine(int x0, int y0, int x1, int y1, char pixel = '#')
-    {
-        int dx = Math.Abs(x1 - x0);
-        int dy = -Math.Abs(y1 - y0);
-        int sx = x0 < x1 ? 1 : -1;
-        int sy = y0 < y1 ? 1 : -1;
-        int err = dx + dy;
+    // public void DrawLine(int x0, int y0, int x1, int y1, char pixel = '#')
+    // {
+    //     int dx = Math.Abs(x1 - x0);
+    //     int dy = -Math.Abs(y1 - y0);
+    //     int sx = x0 < x1 ? 1 : -1;
+    //     int sy = y0 < y1 ? 1 : -1;
+    //     int err = dx + dy;
+    //
+    //     while (true)
+    //     {
+    //         if (x0 >= 0 && x0 < Width && y0 >= 0 && y0 < Height - 1)
+    //         {
+    //             _buffer[y0 * Width + x0] = pixel;
+    //         }
+    //
+    //         if (x0 == x1 && y0 == y1) break;
+    //         int e2 = 2 * err;
+    //         if (e2 >= dy)
+    //         {
+    //             err += dy;
+    //             x0 += sx;
+    //         }
+    //         if (e2 <= dx)
+    //         {
+    //             err += dx;
+    //             y0 += sy;
+    //         }
+    //     }
+    // }
 
-        while (true)
-        {
-            if (x0 >= 0 && x0 < Width && y0 >= 0 && y0 < Height - 1)
-            {
-                _buffer[y0 * Width + x0] = pixel;
-            }
-
-            if (x0 == x1 && y0 == y1) break;
-            int e2 = 2 * err;
-            if (e2 >= dy)
-            {
-                err += dy;
-                x0 += sx;
-            }
-            if (e2 <= dx)
-            {
-                err += dx;
-                y0 += sy;
-            }
-        }
-    }
-
-    public void DrawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, char pixel = '#')
+    public void DrawTriangle(int x0, int y0, float z0, int x1, int y1, float z1, int x2, int y2, float z2, char pixel = '#')
     {
         int minX = Math.Max(0, Math.Min(x0, Math.Min(x1, x2)));
         int maxX = Math.Min(Width - 1, Math.Max(x0, Math.Max(x1, x2)));
@@ -75,7 +79,14 @@ public class Screen
 
                 if (w0 >= 0 && w1 >= 0 && w2 >= 0)
                 {
-                    _buffer[y * Width + x] = pixel;
+                    float z = w0 * z0 + w1 * z1 + w2 * z2;
+                    int index = y * Width + x;
+
+                    if (z < _zBuffer[index])
+                    {
+                        _zBuffer[index] = z;
+                        _buffer[index] = pixel;
+                    }
                 }
             }
         }
