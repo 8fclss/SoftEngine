@@ -4,12 +4,16 @@ A simple 3D software engine written in C# from scratch that renders to the conso
 
 "Software" means that the engine fully relies on the CPU, bypassing GPU hardware acceleration, similar to a "retro" rendering style. 
 
+![](https://github.com/8fclss/SoftEngine/blob/main/cube.gif)
+
 ## Current State
 This project is currently about:
 - **3D Vertex Transformations**: Custom 4x4 matrix implementation for rotation, translation, and world-space mapping.
-- **Face-Based Rendering**: Moving beyond simple edges to a triangle-based system.
+- **Triangle Rasterization**: A barycentric-based system for filling 3D faces.
 - **Back-face Culling**: Optimization using Dot and Cross products to avoid rendering faces that are pointing away from the camera.
-- **Buffer Management**: Double-buffered console output.
+- **Z-Buffering**: Depth management to ensure correct occlusion when rendering overlapping triangles.
+- **Basic Lighting (Flat Shading)**: Surface normals and light direction are used to calculate the intensity of ASCII shades.
+- **Buffer Management**: Character buffer for console output.
 
 ## How it Works
 The engine follows a standard 3D rendering pipeline, adapted for ASCII-based rendering:
@@ -17,8 +21,9 @@ The engine follows a standard 3D rendering pipeline, adapted for ASCII-based ren
 1. **Vertex Transformation**: Each vertex starts in its own local coordinate system. We use 4x4 matrices to rotate and translate these vertices into a single "world space."
 2. **Back-face Culling**: Before drawing, the engine calculates the surface normal of each triangle face. If the face is looking away from the camera (determined by the dot product of the normal and the view direction) it is discarded. This prevents seeing through the models and reduces processing.
 3. **Perspective Projection**: To create the illusion of depth, the X and Y coordinates are divided by their distance from the camera (the Z value). This makes objects further away look smaller on the screen. (bigger Z => smaller 1/Z and vice versa)
-4. **Rasterization**: Since the console is a grid of characters, we use **Bresenham's line algorithm** to decide which "pixels" to fill with characters to represent the edges of the visible triangles.
-5. **Buffer Management**: To avoid flickering, all characters are written into a single character buffer first. Once the frame is complete, the entire buffer is sent to the console at once.
+4. **Triangle Rasterization**: Since the console is a grid of characters, we use **barycentric coordinates** to determine if a "pixel" is inside a triangle and interpolate depth and lighting.
+5. **Z-Buffering and Shading**: For every pixel, the engine compares its depth (Z) against a depth buffer to ensure front-most surfaces are rendered. The "color" is determined by the dot product between the surface normal and a static light source, mapped to a string of ASCII characters: ` .:-=+*#%@`.
+6. **Buffer Management**: To avoid flickering, all characters are written into a single character buffer first. Once the frame is complete, the entire buffer is sent to the console at once.
 
 ## Project Structure
 ```text
@@ -26,7 +31,7 @@ SoftEngine/
 ├── Core/
 │   └── Engine.cs       # Main update and render loop
 ├── Display/
-│   └── Screen.cs       # Console buffer and line drawing
+│   └── Screen.cs       # Console buffer, Z-buffer and triangle drawing
 ├── Mathematics/
 │   ├── Matrix4.cs      # Custom 4x4 matrix implementation
 │   └── Vector3.cs      # Custom 3D vector implementation
