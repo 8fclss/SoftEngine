@@ -67,6 +67,22 @@ public class Engine
             );
         }
 
+        // Build per-vertex normals by accumulating adjacent face normals
+        var vertexNormals = new Vector3[_mesh.Vertices.Length];
+        foreach (var face in _mesh.Faces)
+        {
+            Vector3 s1 = worldPoints[face.b] - worldPoints[face.a];
+            Vector3 s2 = worldPoints[face.c] - worldPoints[face.a];
+            Vector3 faceNormal = Vector3.Cross(s1, s2).Normalize();
+            vertexNormals[face.a] = vertexNormals[face.a] + faceNormal;
+            vertexNormals[face.b] = vertexNormals[face.b] + faceNormal;
+            vertexNormals[face.c] = vertexNormals[face.c] + faceNormal;
+        }
+        for (int i = 0; i < vertexNormals.Length; i++)
+            vertexNormals[i] = vertexNormals[i].Normalize();
+
+        Vector3 lightDir = new Vector3(-0.5f, -0.5f, -1.0f).Normalize();
+
         foreach (var face in _mesh.Faces)
         {
             Vector3 v0 = worldPoints[face.a];
@@ -76,10 +92,9 @@ public class Engine
             Vector3 side1 = v1 - v0;
             Vector3 side2 = v2 - v0;
             Vector3 normal = Vector3.Cross(side1, side2);
-            
-            Vector3 viewDir = v0;
 
-            if (Vector3.Dot(normal, viewDir) < 0)
+            // Backface culling
+            if (Vector3.Dot(normal, v0) < 0)
             {
                 var p0 = projectedPoints[face.a];
                 var p1 = projectedPoints[face.b];
@@ -88,28 +103,16 @@ public class Engine
                 float z0 = worldPoints[face.a].Z;
                 float z1 = worldPoints[face.b].Z;
                 float z2 = worldPoints[face.c].Z;
-                
-                Vector3 n = normal.Normalize();
-                Vector3 lightDir = new Vector3(-0.5f, -0.5f, -1.0f).Normalize();
-                
-                float dot = Vector3.Dot(n, lightDir);
-                
-                float intensity = Math.Clamp(dot, 0, 1) + 0.2f;
-                char shade = GetShade(intensity);
 
-                _screen.DrawTriangle(p0.x, p0.y, z0, p1.x, p1.y, z1, p2.x, p2.y, z2, shade);
+                // Per-vertex intensity for smooth interpolation across the face
+                float i0 = Math.Clamp(Vector3.Dot(vertexNormals[face.a], lightDir), 0, 1) + 0.2f;
+                float i1 = Math.Clamp(Vector3.Dot(vertexNormals[face.b], lightDir), 0, 1) + 0.2f;
+                float i2 = Math.Clamp(Vector3.Dot(vertexNormals[face.c], lightDir), 0, 1) + 0.2f;
+
+                _screen.DrawTriangle(p0.x, p0.y, z0, p1.x, p1.y, z1, p2.x, p2.y, z2, i0, i1, i2);
             }
         }
 
         _screen.Present();
-    }
-
-    private char GetShade(float intensity)
-    {
-        string shades = " .:-=+*#%@";
-        int index = (int)(intensity * (shades.Length - 1));
-        if (index < 0) index = 0;
-        if (index >= shades.Length) index = shades.Length - 1;
-        return shades[index];
     }
 }

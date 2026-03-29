@@ -59,7 +59,8 @@ public class Screen
     //     }
     // }
 
-    public void DrawTriangle(int x0, int y0, float z0, int x1, int y1, float z1, int x2, int y2, float z2, char pixel = '#')
+    public void DrawTriangle(int x0, int y0, float z0, int x1, int y1, float z1, int x2, int y2, float z2,
+        float i0, float i1, float i2)
     {
         int minX = Math.Max(0, Math.Min(x0, Math.Min(x1, x2)));
         int maxX = Math.Min(Width - 1, Math.Max(x0, Math.Max(x1, x2)));
@@ -85,11 +86,21 @@ public class Screen
                     if (z < _zBuffer[index])
                     {
                         _zBuffer[index] = z;
-                        _buffer[index] = pixel;
+                        float intensity = w0 * i0 + w1 * i1 + w2 * i2;
+                        _buffer[index] = GetShade(intensity);
                     }
                 }
             }
         }
+    }
+
+    private char GetShade(float intensity)
+    {
+        string shades = " .:-=+*#%@";
+        int idx = (int)(intensity * (shades.Length - 1));
+        if (idx < 0) idx = 0;
+        if (idx >= shades.Length) idx = shades.Length - 1;
+        return shades[idx];
     }
 
     public void Present()
