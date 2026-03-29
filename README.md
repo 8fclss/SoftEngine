@@ -12,7 +12,7 @@ This project is currently about:
 - **Triangle Rasterization**: A barycentric-based system for filling 3D faces.
 - **Back-face Culling**: Optimization using Dot and Cross products to avoid rendering faces that are pointing away from the camera.
 - **Z-Buffering**: Depth management to ensure correct occlusion when rendering overlapping triangles.
-- **Basic Lighting (Flat Shading)**: Surface normals and light direction are used to calculate the intensity of ASCII shades.
+- **Gouraud Shading**: Per-vertex normals are accumulated from adjacent faces and normalized. Lighting intensity is calculated per-vertex and interpolated smoothly across each triangle using barycentric coordinates.
 - **Buffer Management**: Character buffer for console output.
 
 ## How it Works
@@ -22,7 +22,7 @@ The engine follows a standard 3D rendering pipeline, adapted for ASCII-based ren
 2. **Back-face Culling**: Before drawing, the engine calculates the surface normal of each triangle face. If the face is looking away from the camera (determined by the dot product of the normal and the view direction) it is discarded. This prevents seeing through the models and reduces processing.
 3. **Perspective Projection**: To create the illusion of depth, the X and Y coordinates are divided by their distance from the camera (the Z value). This makes objects further away look smaller on the screen. (bigger Z => smaller 1/Z and vice versa)
 4. **Triangle Rasterization**: Since the console is a grid of characters, we use **barycentric coordinates** to determine if a "pixel" is inside a triangle and interpolate depth and lighting.
-5. **Z-Buffering and Shading**: For every pixel, the engine compares its depth (Z) against a depth buffer to ensure front-most surfaces are rendered. The "color" is determined by the dot product between the surface normal and a static light source, mapped to a string of ASCII characters: ` .:-=+*#%@`.
+5. **Z-Buffering and Shading**: For every pixel, the engine compares its depth (Z) against a depth buffer to ensure front-most surfaces are rendered. Per-vertex normals are computed by accumulating and normalizing adjacent face normals. Lighting intensity is calculated per-vertex via dot product with a static light source, then smoothly interpolated across each triangle using barycentric coordinates (Gouraud shading), and mapped to ASCII characters: ` .:-=+*#%@`.
 6. **Buffer Management**: To avoid flickering, all characters are written into a single character buffer first. Once the frame is complete, the entire buffer is sent to the console at once.
 
 ## Project Structure
